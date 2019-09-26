@@ -49,7 +49,7 @@
  *
  *  @return Alert
  */
-- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message delegate:(id<AlertDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle otherButtonTitles:(NSString *)otherButtonTitles, ... NS_REQUIRES_NIL_TERMINATION;{
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message delegate:(id<AlertDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle otherButtonTitles:(NSArray *)otherButtonTitles{
     self = [super init];
     if (self) {
         titleText = title;
@@ -68,22 +68,8 @@
             hasCancelBtn = YES;
             [argsArray insertObject:cancelButtonTitle atIndex:0];
         }
-        va_list params; //定义一个指向个数可变的参数列表指针;
-        va_start(params,otherButtonTitles);//va_start 得到第一个可变参数地址,
-        id arg;
         if (otherButtonTitles) {
-            //将第一个参数添加到array
-            id prev = otherButtonTitles;
-            [argsArray addObject:prev];
-            //va_arg 指向下一个参数地址
-            //这里是问题的所在 网上的例子，没有保存第一个参数地址，后边循环，指针将不会在指向第一个参数
-            while( (arg = va_arg(params,id)) ){
-                if ( arg ){
-                    [argsArray addObject:arg];
-                }
-            }
-            //置空
-            va_end(params);
+            [argsArray addObjectsFromArray:otherButtonTitles];
         }
     }
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(needsDisplay) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
@@ -100,7 +86,9 @@
     if (_clickBlock) {
         _clickBlock(self, sender.tag);
     }
-    [self dismiss];
+    if (_autoDismiss) {
+        [self dismiss];
+    }
 }
 
 /**
@@ -134,6 +122,16 @@
         UIWindow *window = ((UIWindow *)[UIApplication sharedApplication].keyWindow);
         [window addSubview:self];
         [window endEditing:YES];
+        [self performPresentationAnimation];
+    });
+}
+    
+- (void)showAt:(UIView* )view {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self needsDisplay];
+        /*UIWindow *window = ((UIWindow *)[[UIApplication sharedApplication] windows][0]);*/
+        [view addSubview:self];
+        [view endEditing:YES];
         [self performPresentationAnimation];
     });
 }
@@ -468,9 +466,9 @@ CGRect getScreenBounds() {
     CGRect screenBounds = getScreenBounds();
     CGRect rect = [note.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
     [UIView animateWithDuration:[note.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue] animations:^{
-        CGRect viewRect = self.alertView.frame;
+        CGRect viewRect = _alertView.frame;
         viewRect.origin.y = CGRectGetHeight(screenBounds)-rect.size.height-viewRect.size.height;
-        self.alertView.frame = viewRect;
+        _alertView.frame = viewRect;
     }completion:^(BOOL finished) {
     }];
 }
@@ -480,7 +478,7 @@ CGRect getScreenBounds() {
  */
 - (void)keyBoardWillHide:(NSNotification *)note{
     [UIView animateWithDuration:[note.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue] animations:^{
-        self.alertView.center = self.center;
+        _alertView.center = self.center;
     }];
 }
 
@@ -508,3 +506,4 @@ CGRect getScreenBounds() {
 }
 
 @end
+
