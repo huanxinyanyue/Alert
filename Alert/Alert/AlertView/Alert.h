@@ -45,6 +45,8 @@ typedef NS_ENUM(NSInteger, AlertStyle) {
 @property (nonatomic, assign) CGFloat lineSpacing;        // DEFAULT_LINE_SPACING
 @property (nonatomic, assign) CGFloat paragraphSpacing;   // DEFAULT_PARAGRAPH_SPACING
 @property (nonatomic, assign) AlertStyle alertStyle;   // DEFAULT_PARAGRAPH_SPACING
+    
+@property (nonatomic, assign) BOOL autoDismiss;
 
 #pragma mark - --block
 typedef void (^CancelAlertBlock)(Alert *alertView) ;
@@ -67,12 +69,14 @@ typedef void (^ClicksAlertBlock)(Alert *alertView, NSInteger buttonIndex);
  *
  *  @return Alert Alert *
  */
-- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message delegate:(id<AlertDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle otherButtonTitles:(NSString *)otherButtonTitles, ...NS_REQUIRES_NIL_TERMINATION;
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message delegate:(id<AlertDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle otherButtonTitles:(NSArray *)otherButtonTitles;
 
 /**
  *  显示alertView
  */
 - (void)show;
+    
+- (void)showAt:(UIView *) view;
 @end
 
 #pragma mark - --delegate
@@ -95,3 +99,4 @@ typedef void (^ClicksAlertBlock)(Alert *alertView, NSInteger buttonIndex);
 - (void)alertViewCancel:(Alert *)alertView;
 
 @end
+
